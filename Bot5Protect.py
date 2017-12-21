@@ -334,7 +334,7 @@ def bot(op):
                     G = ki2.getGroup(op.param1)
                     G.preventJoinByTicket = False
                     Amid.updateGroup(G)
-                    Ticket = Amid.reissueGroupTicket(op.param1)
+                    Ticket = ki2.reissueGroupTicket(op.param1)
                     cl.acceptGroupInvitationByTicket(op.param1,Ticket)
                     ki3.acceptGroupInvitationByTicket(op.param1,Ticket)
                     ki4.acceptGroupInvitationByTicket(op.param1,Ticket)
@@ -399,23 +399,30 @@ def bot(op):
                     cl.updateGroup(X)
                     Ti = cl.reissueGroupTicket(op.param1)
 		
-         if op.type == 13:
+	if op.type == 13:
+	    if op.param2 not in admin or creator or staff:
+	       G = cl.getGroup(op.param1)
+	       cl.acceptGroupInvitation(op.param1)
+	       cl.sendText(Terima Kasih Telah Mengundang Saya Ke Group\nSilahkan Invite Lagi Setelah Anda Menjadi Staff Atau Admin\n\nJika Ingin Menjadi Admin Silahkan Contact Creator\nCreator: https://line.me/ti/p/~hafidzmj")
+	       msg.contentType = 13
+	       msg.contentMetaData = {'mid':creator}
+	       cl.sendMessage(msg)
+	if op.type == 13:
             print op.param1
             print op.param2
             print op.param3
             if mid in op.param3:
+	      if op.param2 in admin or creator or staff:
                 G = cl.getGroup(op.param1)
                 if wait["autoJoin"] == True:
-                    if wait["autoCancel"]["on"] == True:
-                        if len(G.members) <= wait["autoCancel"]["members"]:
-                            cl.rejectGroupInvitation(op.param1)
-                        else:
-                            cl.acceptGroupInvitation(op.param1)
-                    else:
-                        cl.acceptGroupInvitation(op.param1)
+                        cl.acceptGroupInvitation(op.param1,[op.param2])
+                else:
+                        cl.acceptGroupInvitation(op.param1,[op.param2])
                 elif wait["autoCancel"]["on"] == True:
                     if len(G.members) <= wait["autoCancel"]["members"]:
-                        cl.rejectGroupInvitation(op.param1)
+			cl.acceptGroupInvitation(op.param1)
+                        cl.cancelGroupInvitation(op.param1)
+			cl.leaveGroup(op.param1)
             else:
                 Inviter = op.param3.replace(" ",',')
                 InviterX = Inviter.split(",")
@@ -444,6 +451,7 @@ def bot(op):
 	
         if op.type == 19:
             if op.param3 in admin:
+	       if op.param2 not in Bots or admin or creator or staff:
                  random.choice(KAC).kickoutFromGroup(op.param1,[op.param2])
                  random.choice(KAC).inviteIntoGroup(op.param1,admin)
             else:
@@ -451,6 +459,7 @@ def bot(op):
 
 	if op.type == 19:
             if op.param3 in staff:
+	       if op.param2 not in Bots or admin or creator or staff:
                  random.choice(KAC).kickoutFromGroup(op.param1,[op.param2])
                  random.choice(KAC).inviteIntoGroup(op.param1,staff)
             else:
@@ -458,13 +467,15 @@ def bot(op):
         
 	if op.type == 19:
             if op.param3 in creator:
+		if op.param2 not in Bots or admin or creator or staff:
                  random.choice(KAC).kickoutFromGroup(op.param1,[op.param2])
                  random.choice(KAC).inviteIntoGroup(op.param1,creator)
             else:
                 pass
 	
         if op.type == 19:
-            if op.param2 not in admin or Bots or creator:
+            if op.param3 not in admin or Bots or creator or staff:
+		if op.param2 not in admin or Bots or creator or staff:
                  random.choice(KAC).kickoutFromGroup(op.param1,[op.param2])
 		 random.choice(KAC).inviteIntoGroup(op.param1,[op.param3])
                  wait["blacklist"][op.param2] = True
@@ -604,30 +615,6 @@ def bot(op):
                         cl.updateGroup(G)
                         wait["blacklist"][op.param2] = True
 			
-        if op.type == 13:
-            if mid in op.param3:
-                G = cl.getGroup(op.param1)
-                if wait["autoJoin"] == True:
-                    if wait["autoCancel"]["on"] == True:
-                        if len(G.members) <= wait["autoCancel"]["members"]:
-                            cl.rejectGroupInvitation(op.param1)
-                        else:
-                            cl.acceptGroupInvitation(op.param1)
-                    else:
-                        cl.acceptGroupInvitation(op.param1)
-                elif wait["autoCancel"]["on"] == True:
-                    if len(G.members) <= wait["autoCancel"]["members"]:
-                        cl.rejectGroupInvitation(op.param1)
-            else:
-                Inviter = op.param3.replace("",',')
-                InviterX = Inviter.split(",")
-                matched_list = []
-                for tag in wait["blacklist"]:
-                    matched_list+=filter(lambda str: str == tag, InviterX)
-                if matched_list == []:
-                    pass
-                else:
-                    cl.cancelGroupInvitation(op.param1, matched_list)
         if op.type == 22:
             if wait["leaveRoom"] == True:
                 cl.leaveRoom(op.param1)
@@ -648,7 +635,7 @@ def bot(op):
         #------Cancel User Kick start------#
         if op.type == 32:
             if op.param2 not in Bots or admin or staff or creator:
-	     if op.param3 not in Bots or admin or staff:
+	     if op.param3 in admin or staff or creator:
                cl.kickoutFromGroup(op.param1,[op.param2])
 	       cl.inviteIntoGroup(op.param1,[op.param3])
         #-----Cancel User Kick Finish------#
@@ -758,14 +745,32 @@ def bot(op):
 		 else:
 		    cl.sendText(msg.to,"It can't be used besides the group.")
      
-            elif "kick " in msg.text.lower():
+            elif "kick: " in msg.text.lower():
 	      if msg.from_ in admin or staff or creator:
-		 midd = msg.text.lower().replace("kick ","")
+		 midd = msg.text.lower().replace("kick: ","")
 		 cl.kickoutFromGroup(msg.to,[midd])
-
-            elif "invite " in msg.text:
+						
+                 #----->Total Friend and Group<-----#
+            elif msg.text.lower() in ["result"]:
+                if msg.from_ in staff or Bots or creator or admin:
+                    mE = cl.getProfile()
+                    gT = cl.getGroupIdsJoined()
+                    fT = cl.getAllContactIds()
+                    cl.sendText(msg.to,"「"+mE.displayName+"」 \n\nGroup total : " + str(len(gT))+ "\nFriend total: " +str(len(fT)))
+						
+	    elif "searchid: " in msg.text.lower():
+		if msg.from_ in admin or creator:
+                msgg = msg.text.lower().replace('searchid: ','')
+                conn = cl.findContactsByUserid(msgg)
+                if True:
+                    msg.contentType = 13
+                    msg.contentMetadata = {'mid': conn.mid}
+                    cl.sendText(msg.to,"http://line.me/ti/p/~" + msgg)
+                    cl.sendMessage(msg)
+						
+            elif "invite: " in msg.text.lower():
 	      if msg.from_ in admin or staff or creator:
-		 midd = msg.text.replace("Invite ","")
+		 midd = msg.text.lower().replace("invite: ","")
 		 cl.findAndAddContactsByMid(midd)
 		 cl.inviteIntoGroup(msg.to,[midd])
 
